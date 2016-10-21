@@ -1,0 +1,26 @@
+machine:
+  environment:
+    IMPORT_PATH: "github.com/o0khoiclub0o/piflab-store-api-go"
+    FULL_IMPORT_PATH: "`echo $GOPATH | cut -d: -f1`/src/$IMPORT_PATH"
+    DATABASE_URL: "postgres://root:@127.0.0.1:5432/circle_test"
+    COVERALLS_TOKEN: ZFTjZRukTuUW6YITt9SCXkfQBowmjGFw4
+  services:
+    - mysql
+dependencies:
+  pre:
+    - go get github.com/tools/godep
+  override:
+    - mkdir -p $FULL_IMPORT_PATH
+    - rsync -az --delete ./ $FULL_IMPORT_PATH
+    - godep restore
+
+test:
+  pre:
+    - go get bitbucket.org/zealotnt/goose/cmd/goose
+    - go install github.com/onsi/ginkgo/ginkgo
+    - go get golang.org/x/tools/cmd/cover
+    - go get github.com/mattn/goveralls
+  override:
+    - cd $FULL_IMPORT_PATH && goose up
+    - cd $FULL_IMPORT_PATH && ginkgo -r -cover
+    - cd $FULL_IMPORT_PATH && ./testcoverage.sh

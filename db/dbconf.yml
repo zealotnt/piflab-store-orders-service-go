@@ -1,0 +1,2 @@
+development:
+    open: ${DATABASE_URL}
