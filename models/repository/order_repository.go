@@ -6,7 +6,6 @@ import (
 	. "github.com/o0khoiclub0o/piflab-store-api-go/models"
 
 	"errors"
-	"fmt"
 	"math/rand"
 	"strings"
 	"time"
@@ -58,34 +57,12 @@ try_gen_other_value:
 	goto try_gen_other_value
 }
 
-func (repo OrderRepository) getOrderItemsInfo(order *Order) error {
-	for idx, item := range order.Items {
-		product := &Product{}
-		product.Id = item.ProductId
-
-		if err := repo.DB.Select("image, image_updated_at").Find(&product).Error; err != nil {
-			return fmt.Errorf("Product %v", err)
-		}
-
-		order.Items[idx].ProductPrice = product.Price
-		order.Items[idx].ProductName = product.Name
-		order.Items[idx].ProductImageThumbnailUrl = product.ImageThumbnailUrl
-		return nil
-	}
-
-	return nil
-}
-
 func (repo OrderRepository) clearNullQuantity() {
 	repo.DB.Delete(OrderItem{}, "quantity=0")
 }
 
 func (repo OrderRepository) createOrder(order *Order) error {
 	if err := repo.generateAccessToken(order); err != nil {
-		return err
-	}
-
-	if err := repo.getOrderItemsInfo(order); err != nil {
 		return err
 	}
 
@@ -125,8 +102,6 @@ func (repo OrderRepository) updateOrder(order *Order) error {
 	// Don't return access_token when updating
 	order.EraseAccessToken()
 
-	repo.getOrderItemsInfo(order)
-
 	return nil
 }
 
@@ -146,7 +121,6 @@ func (repo OrderRepository) FindByOrderId(order_code string) (*Order, error) {
 
 	// use the order.Items to update products information
 	order.Items = *items
-	repo.getOrderItemsInfo(order)
 
 	return order, nil
 }
@@ -167,7 +141,6 @@ func (repo OrderRepository) GetOrderByOrdercode(order_code string) (*Order, erro
 
 	// use the order.Items to update products information
 	order.Items = *items
-	repo.getOrderItemsInfo(order)
 
 	return order, nil
 }
@@ -188,7 +161,6 @@ func (repo OrderRepository) GetOrder(access_token string) (*Order, error) {
 
 	// use the order.Items to update products information
 	order.Items = *items
-	repo.getOrderItemsInfo(order)
 
 	return order, nil
 }
@@ -218,8 +190,6 @@ func (repo OrderRepository) DeleteOrderItem(order *Order, item_id uint) error {
 	items := &[]OrderItem{}
 	repo.DB.Where("order_id = ?", order.Id).Find(items)
 	order.Items = *items
-
-	repo.getOrderItemsInfo(order)
 
 	return nil
 }
@@ -257,7 +227,6 @@ func (repo OrderRepository) GetPage(offset uint, limit uint, status string, sort
 		}
 		// use the order.Items to update products information
 		(*orders)[idx].Items = *items
-		repo.getOrderItemsInfo(&(*orders)[idx])
 		(*orders)[idx].CalculateAmount()
 	}
 

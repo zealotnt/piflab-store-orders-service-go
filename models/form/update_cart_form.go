@@ -79,6 +79,13 @@ func (form *CartForm) Validate(method string, app ...*App) error {
 		if *form.Quantity == 0 {
 			return errors.New("Quantity should not be 0")
 		}
+
+		if form.Name == nil {
+			return errors.New("Product name required when save cart")
+		}
+		if form.Price == nil {
+			return errors.New("Price name required when save cart")
+		}
 	}
 
 	if method == "DELETE" {
@@ -98,6 +105,13 @@ func (form *CartForm) Validate(method string, app ...*App) error {
 		}
 		if *form.Quantity < 0 {
 			return errors.New("Quantity should bigger or equal to 0")
+		}
+
+		if form.Name == nil {
+			return errors.New("Product name required when save cart")
+		}
+		if form.Price == nil {
+			return errors.New("Price name required when save cart")
 		}
 	}
 
@@ -122,15 +136,15 @@ func (form *CartForm) Order(app *App, item_id ...uint) (*Order, error) {
 
 	// DELETE method should not update
 	if form.Product_Id != nil && form.Quantity != nil {
-		err = order.UpdateItems(form.Product_Id, nil, *form.Quantity)
+		err = order.UpdateItems(form.Product_Id, nil, *form.Quantity, *form.Name, int(*form.Price))
 	}
 
 	// PUT CartItem, should retrieve ProductId based on ItemId
 	if form.Product_Id == nil && form.Quantity != nil {
-		err = order.UpdateItems(nil, &item_id[0], *form.Quantity)
+		err = order.UpdateItems(nil, &item_id[0], *form.Quantity, *form.Name, int(*form.Price))
 	}
 
-	// If this is the first time craete order,
+	// If this is the first time create order,
 	// this will avoid error when create order
 	// (pq: invalid input value for enum order_status: "")
 	if order.Status == "" {
