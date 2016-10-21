@@ -38,7 +38,7 @@ type OrderSlice []Order
 type Order struct {
 	Id          uint   `json:"-"`
 	AccessToken string `json:"access_token,omitempty"`
-	Status      string `json:"-"`
+	Status      string `json:"status"`
 
 	Items []OrderItem `json:"items" sql:"order_items"`
 
@@ -60,10 +60,10 @@ type OrderStatusLog struct {
 type OrderItem struct {
 	Id                       uint    `json:"id" sql:"id"`
 	OrderId                  uint    `json:"-" sql:"REFERENCES Orders(id)"`
-	ProductId                uint    `json:"product_id" sql:"REFERENCES products(id)"`
-	ProductName              string  `json:"name" sql:"product_name"`
+	ProductId                uint    `json:"product_id" sql:"column:product_id"`
+	ProductName              string  `json:"name" sql:"column:name"`
 	ProductImageThumbnailUrl *string `json:"image_thumbnail_url" sql:"-"`
-	ProductPrice             int     `json:"price" sql:"product_price"`
+	ProductPrice             int     `json:"price" sql:"column:price"`
 	Quantity                 int     `json:"quantity"`
 }
 

@@ -29,8 +29,6 @@ func GetCartHandler(app *App) HandlerFunc {
 		}
 		order.CalculateAmount()
 
-		order.EraseAccessToken()
-
 		maps, err := FieldSelection(order, form.Fields)
 		if err != nil {
 			JSON(w, err)

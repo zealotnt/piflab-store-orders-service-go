@@ -69,7 +69,6 @@ func (repo OrderRepository) getOrderItemsInfo(order *Order) error {
 
 		order.Items[idx].ProductPrice = product.Price
 		order.Items[idx].ProductName = product.Name
-		// (*product).GetImageUrl()
 		order.Items[idx].ProductImageThumbnailUrl = product.ImageThumbnailUrl
 		return nil
 	}
