@@ -12,7 +12,7 @@ type Index struct {
 
 func IndexHandler(app *App) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request, c Context) {
-		index := Index{"Gateway API 1.0.0"}
+		index := Index{"Orders API 1.0.0"}
 
 		json.NewEncoder(w).Encode(index)
 	}
