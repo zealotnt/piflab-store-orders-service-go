@@ -29,12 +29,7 @@ func GetCartHandler(app *App) HandlerFunc {
 		}
 		order.CalculateAmount()
 
-		maps, err := FieldSelection(order, form.Fields)
-		if err != nil {
-			JSON(w, err)
-			return
-		}
-		JSON(w, maps)
+		JSON(w, order)
 	}
 }
 
@@ -65,12 +60,7 @@ func UpdateCartHandler(app *App) HandlerFunc {
 
 		order.CalculateAmount()
 
-		maps, err := FieldSelection(order, form.Fields)
-		if err != nil {
-			JSON(w, err)
-			return
-		}
-		JSON(w, maps)
+		JSON(w, order)
 	}
 }
 
@@ -101,12 +91,7 @@ func UpdateCartItemHandler(app *App) HandlerFunc {
 
 		order.CalculateAmount()
 
-		maps, err := FieldSelection(order, form.Fields)
-		if err != nil {
-			JSON(w, err)
-			return
-		}
-		JSON(w, maps)
+		JSON(w, order)
 	}
 }
 
@@ -137,12 +122,7 @@ func DeleteCartItemHandler(app *App) HandlerFunc {
 
 		order.CalculateAmount()
 
-		maps, err := FieldSelection(order, form.Fields)
-		if err != nil {
-			JSON(w, err)
-			return
-		}
-		JSON(w, maps)
+		JSON(w, order)
 	}
 }
 
@@ -173,13 +153,7 @@ func CheckoutCartHandler(app *App) HandlerFunc {
 
 		order.CalculateAmount()
 		ret := order.ReturnCheckoutRequest()
-
-		maps, err := FieldSelection(ret, form.Fields)
-		if err != nil {
-			JSON(w, err)
-			return
-		}
-		JSON(w, maps)
+		JSON(w, ret)
 	}
 }
 
@@ -227,13 +201,7 @@ func GetCheckoutDetailHandler(app *App) HandlerFunc {
 
 		order.CalculateAmount()
 		ret := order.ReturnCheckoutRequest()
-
-		maps, err := FieldSelection(ret, form.Fields)
-		if err != nil {
-			JSON(w, err)
-			return
-		}
-		JSON(w, maps)
+		JSON(w, ret)
 	}
 }
 
@@ -263,12 +231,6 @@ func UpdateCheckoutStatusHandler(app *App) HandlerFunc {
 
 		order.CalculateAmount()
 		ret := order.ReturnCheckoutRequest()
-
-		maps, err := FieldSelection(ret, form.Fields)
-		if err != nil {
-			JSON(w, err)
-			return
-		}
-		JSON(w, maps)
+		JSON(w, ret)
 	}
 }
