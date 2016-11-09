@@ -1,5 +1,6 @@
 #!/bin/bash
 
+ENTRY_HEADER='[ENTRY]'
 usage() {
 	echo
 	echo "Syntax: api-go-entry.sh <db-type>"
@@ -24,6 +25,12 @@ case $dbTyped in
 	;;
 esac
 
-./wait-for-it.sh db_order:$dbPort -t 60
+# Wait for database service
+./wait-for-it.sh $DB_MACHINE_NAME:$dbPort -t 60
+
+echo "$ENTRY_HEADER Migrate"
 goose up
+
+echo "$ENTRY_HEADER Updating Go packages"
+godep restore
 gin -p $PORT run
