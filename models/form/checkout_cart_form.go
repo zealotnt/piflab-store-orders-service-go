@@ -74,19 +74,31 @@ func (form *CheckoutCartForm) Validate() error {
 		return errors.New("Customer's Email address is invalid")
 	}
 
+	if form.Items == nil {
+		return errors.New("Cart items is required")
+	}
+
 	return nil
 }
 
 func (form *CheckoutCartForm) Order(app *App) (*Order, error) {
-	var order = new(Order)
+	var order Order
 	var err error
 
-	// TODO: Check if the cart_id exists in the db
-	if order, err = (OrderRepository{app.DB}).GetOrder(*form.AccessToken); err == nil {
-		// unknown err, return anyway
-		return nil, errors.New("Order is already checked out, please use another order")
+	// Check if the cart_id exists in the db
+	if _, err = (OrderRepository{app.DB}).GetOrder(*form.AccessToken); err == nil {
+		// if found any order in db, returns cause it already created
+		// (checkout is an action that creates order)
+		return nil, errors.New("Order is already checked out, please create another order")
 	}
 
+	// update items[] list from form
+	for _, item := range form.Items {
+		order.Items = append(order.Items, item)
+	}
+
+	// update others info
+	order.AccessToken = *form.AccessToken
 	order.OrderInfo.CustomerName = *form.CustomerName
 	order.OrderInfo.CustomerAddress = *form.CustomerAddress
 	order.OrderInfo.CustomerPhone = *form.CustomerPhone
@@ -99,5 +111,5 @@ func (form *CheckoutCartForm) Order(app *App) (*Order, error) {
 	// Change status to processing, any other change to oder_items is rejected from now on
 	order.Status = "processing"
 
-	return order, err
+	return &order, nil
 }
