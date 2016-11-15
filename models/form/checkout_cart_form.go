@@ -11,12 +11,13 @@ import (
 )
 
 type CheckoutCartForm struct {
-	AccessToken     *string `json:"access_token"`
-	CustomerName    *string `json:"name"`
-	CustomerAddress *string `json:"address"`
-	CustomerPhone   *string `json:"phone"`
-	CustomerEmail   *string `json:"email"`
-	CustomerNote    *string `json:"note"`
+	AccessToken     *string     `json:"access_token"`
+	Items           []OrderItem `json:"items,omitempty"`
+	CustomerName    *string     `json:"name"`
+	CustomerAddress *string     `json:"address"`
+	CustomerPhone   *string     `json:"phone"`
+	CustomerEmail   *string     `json:"email"`
+	CustomerNote    *string     `json:"note"`
 	Fields          string
 }
 
@@ -42,6 +43,9 @@ func (form *CheckoutCartForm) FieldMap(req *http.Request) binding.FieldMap {
 		},
 		&form.Fields: binding.Field{
 			Form: "fields",
+		},
+		&form.Fields: binding.Field{
+			Form: "items",
 		},
 	}
 }
@@ -77,17 +81,10 @@ func (form *CheckoutCartForm) Order(app *App) (*Order, error) {
 	var order = new(Order)
 	var err error
 
-	if order, err = (OrderRepository{app.DB}).GetOrder(*form.AccessToken); err != nil {
-		if err.Error() == "record not found" {
-			return order, errors.New("Access Token is invalid")
-		}
-
+	// TODO: Check if the cart_id exists in the db
+	if order, err = (OrderRepository{app.DB}).GetOrder(*form.AccessToken); err == nil {
 		// unknown err, return anyway
-		return order, err
-	}
-
-	if order.Status != "cart" {
-		return order, errors.New("Order is in " + order.Status + " state, please use another cart")
+		return nil, errors.New("Order is already checked out, please use another order")
 	}
 
 	order.OrderInfo.CustomerName = *form.CustomerName

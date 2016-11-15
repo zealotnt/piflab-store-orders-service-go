@@ -1,11 +1,11 @@
 
 -- +goose Up
 -- SQL in section 'Up' is executed when this migration is applied
-CREATE TYPE order_status AS ENUM ('cart', 'processing', 'shipping', 'cancelled', 'completed');
+CREATE TYPE order_status AS ENUM ('processing', 'shipping', 'cancelled', 'completed');
 CREATE TABLE orders (
 	id SERIAL PRIMARY KEY,
 	access_token TEXT NOT NULL UNIQUE,
-	status order_status DEFAULT 'cart',
+	status order_status DEFAULT 'processing',
 
 	code varchar(255),
 	customer_name varchar(255),

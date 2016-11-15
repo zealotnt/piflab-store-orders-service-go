@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"strconv"
 	"time"
 )
@@ -127,50 +126,6 @@ func (orders OrderSlice) GetPaging(offset uint, limit uint, total uint, sort str
 		Data:   &orders_return,
 		Paging: getOrderPage(offset, limit, total, sort),
 	}
-}
-
-func (order *Order) UpdateItems(product_id *uint, item_id *uint, quantity int, product_name string, product_price int) error {
-	for idx, item := range order.Items {
-		if product_id != nil {
-			if item.ProductId == *product_id {
-				order.Items[idx].Quantity += quantity
-				if order.Items[idx].Quantity < 0 {
-					order.Items[idx].Quantity = 0
-				}
-				order.Items[idx].ProductName = product_name
-				order.Items[idx].ProductPrice = product_price
-				return nil
-			}
-		}
-		if item_id != nil {
-			if item.Id == *item_id {
-				order.Items[idx].Quantity = quantity
-				order.Items[idx].ProductName = product_name
-				order.Items[idx].ProductPrice = product_price
-				return nil
-			}
-		}
-	}
-
-	if item_id != nil {
-		return errors.New("Item ID not found")
-	}
-
-	if quantity < 0 {
-		return errors.New("Quantity for item should bigger than 0")
-	}
-
-	if product_id != nil {
-		order.Items = append(order.Items,
-			OrderItem{
-				ProductId:    *product_id,
-				Quantity:     quantity,
-				ProductName:  product_name,
-				ProductPrice: product_price,
-			})
-	}
-
-	return nil
 }
 
 func (order *Order) CalculateAmount() {

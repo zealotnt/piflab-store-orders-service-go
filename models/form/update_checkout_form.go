@@ -45,7 +45,7 @@ func (form *UpdateCheckoutForm) Order(app *App, order_code string) (*Order, erro
 	var order = new(Order)
 	var err error
 
-	if order, err = (OrderRepository{app.DB}).GetOrderByOrdercode(order_code); err != nil {
+	if order, err = (OrderRepository{app.DB}).FindByOrderCode(order_code); err != nil {
 		if err.Error() == "record not found" {
 			return order, errors.New("Order code is invalid")
 		}

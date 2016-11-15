@@ -36,35 +36,11 @@ try_gen_other_value:
 	goto try_gen_other_value
 }
 
-func (repo OrderRepository) generateAccessToken(order *Order) error {
-	rand.Seed(time.Now().UTC().UnixNano())
-
-try_gen_other_value:
-	order.AccessToken = fake.CharactersN(32)
-
-	temp_order := &Order{}
-	if err := repo.DB.Where("access_token = ?", order.AccessToken).Find(temp_order).Error; err != nil {
-		// Check if err is not found -> access_token is unique
-		if err.Error() == "record not found" {
-			return nil
-		}
-
-		// Otherwise, this is database operation error
-		return errors.New("Database error")
-	}
-
-	// duplicate, try again
-	goto try_gen_other_value
-}
-
-func (repo OrderRepository) clearNullQuantity() {
-	repo.DB.Delete(OrderItem{}, "quantity=0")
-}
-
 func (repo OrderRepository) createOrder(order *Order) error {
-	if err := repo.generateAccessToken(order); err != nil {
-		return err
-	}
+	// TODO: Should get access_token from carts service
+	// if err := repo.generateAccessToken(order); err != nil {
+	// 	return err
+	// }
 
 	if err := repo.DB.Create(order).Error; err != nil {
 		return err
@@ -82,22 +58,18 @@ func (repo OrderRepository) updateOrder(order *Order) error {
 		return err
 	}
 
-	// Check if need to create the order_status_log item
-	if order.Status != "cart" {
-		order_status_log := OrderStatusLog{
-			Code:   order.OrderInfo.OrderCode,
-			Status: order.Status,
-		}
+	// TODO: Each time there is a change in checkout, save it to db
+	order_status_log := OrderStatusLog{
+		Code:   order.OrderInfo.OrderCode,
+		Status: order.Status,
+	}
 
-		if err := tx.Create(&order_status_log).Error; err != nil {
-			tx.Rollback()
-			return err
-		}
+	if err := tx.Create(&order_status_log).Error; err != nil {
+		tx.Rollback()
+		return err
 	}
 
 	tx.Commit()
-
-	repo.clearNullQuantity()
 
 	// Don't return access_token when updating
 	order.EraseAccessToken()
@@ -105,31 +77,11 @@ func (repo OrderRepository) updateOrder(order *Order) error {
 	return nil
 }
 
-func (repo OrderRepository) FindByOrderId(order_code string) (*Order, error) {
+func (repo OrderRepository) FindByOrderCode(order_code string) (*Order, error) {
 	order := &Order{}
 	items := &[]OrderItem{}
 
 	// find a order by its access_token
-	if err := repo.DB.Where("code = ?", order_code).Find(order).Error; err != nil {
-		return nil, err
-	}
-
-	// use order.Id to find its OrderItem data (order.Id is its forein key)
-	if err := repo.DB.Where("order_id = ?", order.Id).Find(items).Error; err != nil {
-		return nil, err
-	}
-
-	// use the order.Items to update products information
-	order.Items = *items
-
-	return order, nil
-}
-
-func (repo OrderRepository) GetOrderByOrdercode(order_code string) (*Order, error) {
-	order := &Order{}
-	items := &[]OrderItem{}
-
-	// find a order by its order_code
 	if err := repo.DB.Where("code = ?", order_code).Find(order).Error; err != nil {
 		return nil, err
 	}
@@ -172,39 +124,10 @@ func (repo OrderRepository) SaveOrder(order *Order) error {
 	return repo.updateOrder(order)
 }
 
-func (repo OrderRepository) DeleteOrderItem(order *Order, item_id uint) error {
-	item := OrderItem{}
-
-	// use order.Id to find its OrderItem data (order.Id is its forein key)
-	if err := repo.DB.Where("id = ? AND order_id = ?", item_id, order.Id).Find(&item).Error; err != nil {
-		if err.Error() == "record not found" {
-			return errors.New("Not found Item Id in a Cart")
-		}
-
-		return err
-	}
-
-	repo.DB.Delete(&item)
-
-	// use order.Id to find its OrderItem data (order.Id is its forein key)
-	items := &[]OrderItem{}
-	repo.DB.Where("order_id = ?", order.Id).Find(items)
-	order.Items = *items
-
-	return nil
-}
-
-func (repo OrderRepository) CountOrders() (uint, error) {
-	count := uint(0)
-
-	err := repo.DB.Table("orders").Count(&count).Error
-
-	return count, err
-}
-
 func (repo OrderRepository) GetPage(offset uint, limit uint, status string, sort_field string, sort_order string, search string) (*OrderSlice, uint, error) {
 	orders := &OrderSlice{}
 	items := &[]OrderItem{}
+	var count uint
 	var err error
 	var where_param string
 
@@ -230,7 +153,8 @@ func (repo OrderRepository) GetPage(offset uint, limit uint, status string, sort
 		(*orders)[idx].CalculateAmount()
 	}
 
-	count, _ := repo.CountOrders()
+	// TODO: count number of orders and return
+	repo.DB.Table("orders").Count(&count)
 
 	return orders, count, err
 }
