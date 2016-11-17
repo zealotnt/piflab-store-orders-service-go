@@ -28,7 +28,7 @@ func CheckoutCartHandler(app *App) HandlerFunc {
 			return
 		}
 
-		if err := (OrderRepository{app.DB}).CheckoutOrder(order); err != nil {
+		if err := (OrderRepository{app.DB}).SaveOrder(order); err != nil {
 			JSON(w, err, 500)
 			return
 		}

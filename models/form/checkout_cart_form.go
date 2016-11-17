@@ -94,6 +94,8 @@ func (form *CheckoutCartForm) Order(app *App) (*Order, error) {
 
 	// update items[] list from form
 	for _, item := range form.Items {
+		// remove Id from Items (gorm will update only if the id is present)
+		item.Id = 0
 		order.Items = append(order.Items, item)
 	}
 

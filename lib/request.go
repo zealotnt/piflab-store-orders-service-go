@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httputil"
+	"os"
 	"regexp"
 )
 
@@ -73,4 +74,14 @@ func HttpRequest(method string, route string, body interface{}) (*http.Response,
 	}
 
 	return resp, resp_body
+}
+
+func GetProductService() string {
+	env := os.Getenv("PRODUCT_SERVICE_URL")
+
+	if env == "" {
+		panic("PRODUCT_SERVICE_URL not set")
+	}
+
+	return env
 }

@@ -15,6 +15,18 @@ type OrderRepository struct {
 	*DB
 }
 
+func (repo OrderRepository) getOrderItemsImageUrl(order_items []OrderItem) {
+	for idx, item := range order_items {
+		product := &Product{}
+
+		product.Id = item.ProductId
+		// don't care if the product still present
+		// if it is remove, the image url will be blank
+		product, _ = (ProductRepository{}).FindById(product.Id)
+		order_items[idx].ProductImageThumbnailUrl = product.ImageThumbnailUrl
+	}
+}
+
 func (repo OrderRepository) generateOrderCode(order *Order) error {
 	rand.Seed(time.Now().UTC().UnixNano())
 
@@ -37,14 +49,24 @@ try_gen_other_value:
 }
 
 func (repo OrderRepository) createOrder(order *Order) error {
-	// TODO: Should get access_token from carts service
-	// if err := repo.generateAccessToken(order); err != nil {
-	// 	return err
-	// }
+	if err := repo.generateOrderCode(order); err != nil {
+		return err
+	}
 
 	if err := repo.DB.Create(order).Error; err != nil {
 		return err
 	}
+
+	// Create the order_status_log item
+	order_status_log := OrderStatusLog{
+		Code:   order.OrderInfo.OrderCode,
+		Status: order.Status,
+	}
+	if err := repo.DB.Create(&order_status_log).Error; err != nil {
+		return err
+	}
+
+	repo.getOrderItemsImageUrl(order.Items)
 
 	return nil
 }
@@ -71,6 +93,8 @@ func (repo OrderRepository) updateOrder(order *Order) error {
 
 	tx.Commit()
 
+	repo.getOrderItemsImageUrl(order.Items)
+
 	// Don't return access_token when updating
 	order.EraseAccessToken()
 
@@ -94,6 +118,8 @@ func (repo OrderRepository) FindByOrderCode(order_code string) (*Order, error) {
 	// use the order.Items to update products information
 	order.Items = *items
 
+	repo.getOrderItemsImageUrl(order.Items)
+
 	return order, nil
 }
 
@@ -114,11 +140,13 @@ func (repo OrderRepository) GetOrder(access_token string) (*Order, error) {
 	// use the order.Items to update products information
 	order.Items = *items
 
+	repo.getOrderItemsImageUrl(order.Items)
+
 	return order, nil
 }
 
 func (repo OrderRepository) SaveOrder(order *Order) error {
-	if order.AccessToken == "" {
+	if order.OrderInfo.OrderCode == "" {
 		return repo.createOrder(order)
 	}
 	return repo.updateOrder(order)
@@ -131,14 +159,15 @@ func (repo OrderRepository) GetPage(offset uint, limit uint, status string, sort
 	var err error
 	var where_param string
 
-	if status == "" {
-		where_param = "status!='cart'"
-	} else {
+	if status != "" {
 		where_param = "status='" + status + "'"
 	}
 
 	if search != "" {
-		where_param += " AND LOWER(customer_name) LIKE  '%" + strings.ToLower(search) + "%'"
+		if where_param != "" {
+			where_param += " AND"
+		}
+		where_param += " LOWER(customer_name) LIKE  '%" + strings.ToLower(search) + "%'"
 	}
 
 	err = repo.DB.Order(sort_field + " " + sort_order).Offset(int(offset)).Where(where_param).Limit(int(limit)).Find(orders).Error
@@ -157,31 +186,4 @@ func (repo OrderRepository) GetPage(offset uint, limit uint, status string, sort
 	repo.DB.Table("orders").Count(&count)
 
 	return orders, count, err
-}
-
-func (repo OrderRepository) CheckoutOrder(order *Order) error {
-	if err := repo.generateOrderCode(order); err != nil {
-		return err
-	}
-
-	tx := repo.DB.Begin()
-
-	if err := tx.Save(order).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	// Create the order_status_log item
-	order_status_log := OrderStatusLog{
-		Code:   order.OrderInfo.OrderCode,
-		Status: order.Status,
-	}
-	if err := tx.Create(&order_status_log).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	tx.Commit()
-
-	return nil
 }
