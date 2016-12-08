@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+export TERM=xterm
+
 echo "mode: atomic" > piflab-store-api-go.coverprofile
 
 packages=(
@@ -7,7 +9,6 @@ packages=(
 	"models"
 	"models/form"
 	"models/repository"
-	"services"
 )
 
 if [ "$COVERALLS_TOKEN" == "" ]
