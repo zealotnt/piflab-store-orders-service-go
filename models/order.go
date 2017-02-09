@@ -43,7 +43,8 @@ type Order struct {
 
 	OrderInfo `json:"-"`
 
-	Amounts Amount `json:"amounts" sql:"-"`
+	Amounts    Amount `json:"amounts" sql:"-"`
+	TotalPrice uint   `json:"-" sql:"total_price"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -59,7 +60,7 @@ type OrderStatusLog struct {
 type OrderItem struct {
 	Id                       uint    `json:"id,string" sql:"id"`
 	OrderId                  uint    `json:"-" sql:"REFERENCES Orders(id)"`
-	ProductId                uint    `json:"product_id" sql:"column:product_id"`
+	ProductId                uint    `json:"product_id,string" sql:"column:product_id"`
 	ProductName              string  `json:"name" sql:"column:name"`
 	ProductImageThumbnailUrl *string `json:"image_thumbnail_url" sql:"-"`
 	ProductPrice             int     `json:"price" sql:"column:price"`
@@ -134,6 +135,8 @@ func (order *Order) CalculateAmount() {
 	}
 	order.Amounts.Shipping = 0
 	order.Amounts.Total = order.Amounts.Shipping + order.Amounts.Subtotal
+
+	order.TotalPrice = order.Amounts.Total
 }
 
 func (order *Order) EraseAccessToken() {

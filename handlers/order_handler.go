@@ -33,7 +33,6 @@ func CheckoutCartHandler(app *App) HandlerFunc {
 			return
 		}
 
-		order.CalculateAmount()
 		ret := order.ReturnCheckoutRequest()
 		JSON(w, ret)
 	}

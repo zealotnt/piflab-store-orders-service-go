@@ -113,5 +113,7 @@ func (form *CheckoutCartForm) Order(app *App) (*Order, error) {
 	// Change status to processing, any other change to oder_items is rejected from now on
 	order.Status = "processing"
 
+	order.CalculateAmount()
+
 	return &order, nil
 }

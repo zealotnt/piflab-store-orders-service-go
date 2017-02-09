@@ -23,7 +23,9 @@ func (repo OrderRepository) getOrderItemsImageUrl(order_items []OrderItem) {
 		// don't care if the product still present
 		// if it is remove, the image url will be blank
 		product, _ = (ProductRepository{}).FindById(product.Id)
-		order_items[idx].ProductImageThumbnailUrl = product.ImageThumbnailUrl
+		if product != nil {
+			order_items[idx].ProductImageThumbnailUrl = product.ImageThumbnailUrl
+		}
 	}
 }
 
