@@ -40,6 +40,8 @@ func CheckoutCartHandler(app *App) HandlerFunc {
 
 func GetCheckoutHandler(app *App) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request, c Context) {
+		host_url := HostURL(r)
+
 		form := new(GetCheckoutForm)
 
 		if err := Bind(form, r); err != nil {
@@ -63,7 +65,7 @@ func GetCheckoutHandler(app *App) HandlerFunc {
 			(*orders)[idx].Items = nil
 		}
 
-		orders_by_pages := orders.GetPaging(form.Offset, form.Limit, total, *form.Sort)
+		orders_by_pages := orders.GetPaging(host_url, form.Offset, form.Limit, *form.Sort, form.Search, total)
 		JSON(w, orders_by_pages)
 	}
 }

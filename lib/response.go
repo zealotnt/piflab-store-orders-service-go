@@ -15,6 +15,18 @@ func ValidateEmail(email string) bool {
 	return Re.MatchString(email)
 }
 
+func HostURL(r *http.Request) string {
+	var host_url string
+
+	if r.URL.Scheme != "" {
+		host_url = r.URL.Scheme + "://" + r.Host
+	} else {
+		host_url = r.Host
+	}
+
+	return host_url
+}
+
 func JSON(w http.ResponseWriter, params ...interface{}) {
 	setHTTPStatus(w, params)
 

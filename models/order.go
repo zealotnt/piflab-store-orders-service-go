@@ -67,19 +67,19 @@ type OrderItem struct {
 	Quantity                 int     `json:"quantity"`
 }
 
-type OrderUrl struct {
-	Next     *string `json:"next"`
-	Previous *string `json:"previous"`
-}
-
 type OrderPage struct {
 	Data   *CheckoutReturnSlice `json:"data"`
-	Paging OrderUrl             `json:"paging"`
+	Paging PageUrl              `json:"paging"`
 }
 
-func getOrderPage(offset uint, limit uint, total uint, sort string) OrderUrl {
+func getOrderPage(host_url string, offset uint, limit uint, sort string, search string, total uint) PageUrl {
 	prevNum := uint64(offset - limit)
 	nextNum := uint64(offset + limit)
+
+	if total == 0 {
+		// return null next/previous field
+		return PageUrl{}
+	}
 	if offset < limit {
 		prevNum = 0
 	}
@@ -90,34 +90,42 @@ func getOrderPage(offset uint, limit uint, total uint, sort string) OrderUrl {
 			prevNum = 0
 		}
 	}
-	next := "/orders?offset=" + strconv.FormatUint(nextNum, 10) + "&limit=" + strconv.FormatUint(uint64(limit), 10) + "&" + sort
-	previous := "/orders?offset=" + strconv.FormatUint(prevNum, 10) + "&limit=" + strconv.FormatUint(uint64(limit), 10) + "&" + sort
+
+	next := host_url + "/orders?offset=" + strconv.FormatUint(nextNum, 10) + "&limit=" + strconv.FormatUint(uint64(limit), 10)
+	previous := host_url + "/orders?offset=" + strconv.FormatUint(prevNum, 10) + "&limit=" + strconv.FormatUint(uint64(limit), 10)
+	if sort != "" {
+		next += "&sort=" + sort
+		previous += "&sort=" + sort
+	}
+	if search != "" {
+		next += "&q=" + search
+		previous += "&q=" + search
+	}
 
 	// Nothing to show on next_url
 	if uint64(total) <= nextNum {
 		// If offset already zero, not thing to show on previous_url also
 		if offset == 0 {
-			return OrderUrl{}
+			return PageUrl{}
 		}
 
 		// At least, we have something to show on previous_url
-		return OrderUrl{
+		return PageUrl{
 			Previous: &previous,
 		}
 	}
 	if offset == 0 {
-		return OrderUrl{
+		return PageUrl{
 			Next: &next,
 		}
 	}
-	return OrderUrl{
+	return PageUrl{
 		Next:     &next,
 		Previous: &previous,
 	}
-
 }
 
-func (orders OrderSlice) GetPaging(offset uint, limit uint, total uint, sort string) *OrderPage {
+func (orders OrderSlice) GetPaging(host_url string, offset uint, limit uint, sort string, search string, total uint) *OrderPage {
 	orders_return := CheckoutReturnSlice{}
 	for idx, _ := range orders {
 		orders_return = append(orders_return, orders[idx].ReturnCheckoutRequest())
@@ -125,7 +133,7 @@ func (orders OrderSlice) GetPaging(offset uint, limit uint, total uint, sort str
 	}
 	return &OrderPage{
 		Data:   &orders_return,
-		Paging: getOrderPage(offset, limit, total, sort),
+		Paging: getOrderPage(host_url, offset, limit, sort, search, total),
 	}
 }
 
