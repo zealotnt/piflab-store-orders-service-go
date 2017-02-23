@@ -51,9 +51,9 @@ type Order struct {
 }
 
 type OrderStatusLog struct {
-	Id        uint
-	Code      string
-	Status    string
+	Id        uint   `sql:"id"`
+	OrderId   uint   `sql:"order_id, REFERENCES Orders(id)"`
+	Status    string `sql:"status"`
 	CreatedAt time.Time
 }
 

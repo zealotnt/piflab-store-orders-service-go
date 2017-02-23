@@ -61,8 +61,8 @@ func (repo OrderRepository) createOrder(order *Order) error {
 
 	// Create the order_status_log item
 	order_status_log := OrderStatusLog{
-		Code:   order.OrderInfo.OrderCode,
-		Status: order.Status,
+		OrderId: order.Id,
+		Status:  order.Status,
 	}
 	if err := repo.DB.Create(&order_status_log).Error; err != nil {
 		return err
@@ -84,8 +84,8 @@ func (repo OrderRepository) updateOrder(order *Order) error {
 
 	// TODO: Each time there is a change in checkout, save it to db
 	order_status_log := OrderStatusLog{
-		Code:   order.OrderInfo.OrderCode,
-		Status: order.Status,
+		OrderId: order.Id,
+		Status:  order.Status,
 	}
 
 	if err := tx.Create(&order_status_log).Error; err != nil {
